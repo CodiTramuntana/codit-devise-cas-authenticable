@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Devise
   module Models
     # Extends your User class with support for CAS ticket authentication.
@@ -5,10 +7,10 @@ module Devise
       def self.included(base)
         base.extend ClassMethods
       end
-      
+
       module ClassMethods
         # Authenticate a CAS ticket and return the resulting user object.  Behavior is as follows:
-        # 
+        #
         # * Check ticket validity using RubyCAS::Client.  Return nil if the ticket is invalid.
         # * Find a matching user by username (will use find_for_authentication if available).
         # * If the user does not exist, but Devise.cas_create_user is set, attempt to create the
@@ -17,7 +19,7 @@ module Devise
         # * Return the resulting user object.
         def authenticate_with_cas_ticket(ticket)
           ::Devise.cas_client.validate_service_ticket(ticket) unless ticket.has_been_validated?
-          
+
           if ticket.is_valid?
             identifier = nil
             ticket_response = ticket.respond_to?(:user) ? ticket : ticket.response
@@ -28,12 +30,10 @@ module Devise
             # or the value is blank, then we're done here
             return log_and_exit if identifier.nil?
 
-            logger.debug("Using conditions {#{::Devise.cas_username_column} => #{identifier}} to find the User")
-
-            conditions = { ::Devise.cas_username_column => identifier }
-            resource = find_or_build_resource_from_conditions(conditions)
+            conditions = { ::Devise.cas_username_column => identifier, soci: extract_user_soci(ticket_response) }
+            resource = find_or_build_resource_from_conditions(conditions, ticket_response)
             return nil unless resource
-            
+
             resource.cas_extra_attributes = ticket_response.extra_attributes \
               if resource.respond_to?(:cas_extra_attributes=)
 
@@ -43,6 +43,7 @@ module Devise
         end
 
         private
+
         def should_create_cas_users?
           respond_to?(:cas_create_user?) ? cas_create_user? : ::Devise.cas_create_user?
         end
@@ -52,22 +53,58 @@ module Devise
           response.extra_attributes[::Devise.cas_user_identifier]
         end
 
-        def log_and_exit
-          logger.warn("Could not find a value for [#{::Devise.cas_user_identifier}] in cas_extra_attributes so we cannot find the User.")
-          logger.warn("Make sure config.cas_user_identifier is set to a field that appears in cas_extra_attributes")
-          return nil
+        def extract_user_soci(response)
+          response.extra_attributes.dig('soci')
         end
 
-        def find_or_build_resource_from_conditions(conditions)
+        def extract_organization_id(response)
+          host = URI.parse(response.service).host
+          organization = Decidim::Organization.find_by(host: 'participa.somenergia.coop')
+          organization.try(:id)
+        end
+
+        def extract_attributes(response, new_record = true)
+          extra_attributes = response.extra_attributes
+          name = %(#{extra_attributes['first_name']} #{extra_attributes['last_name']})
+
+          attributes = {
+            email: extra_attributes['email']
+          }
+
+          if new_record
+            attributes = attributes.merge(
+              name: name,
+              username: extra_attributes['username'],
+              decidim_organization_id: extract_organization_id(response),
+              tos_agreement: true,
+              nickname: nicknamize(name),
+              password: Devise.friendly_token.first(name.length)
+            )
+          end
+
+          attributes
+        end
+
+        def log_and_exit
+          logger.warn("Could not find a value for [#{::Devise.cas_user_identifier}] in cas_extra_attributes so we cannot find the User.")
+          logger.warn('Make sure config.cas_user_identifier is set to a field that appears in cas_extra_attributes')
+          nil
+        end
+
+        def find_or_build_resource_from_conditions(conditions, response)
           resource = find_resource_with_conditions(conditions)
-          resource = new(conditions) if (resource.nil? and should_create_cas_users?)
-          return resource
+          resource = new if resource.nil? && should_create_cas_users?
+
+          attributes = extract_attributes(response, resource.new_record?)
+          resource.assign_attributes(attributes)
+          resource.confirm
+          resource
         end
 
         def find_resource_with_conditions(conditions)
           # We don't want to override Devise 1.1's find_for_authentication
           return find_for_authentication(conditions) if respond_to?(:find_for_authentication)
-          find(:first, :conditions => conditions)
+          find(:first, conditions: conditions)
         end
       end
     end

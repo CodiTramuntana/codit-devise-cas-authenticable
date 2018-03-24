@@ -1,6 +1,7 @@
+# frozen_string_literal: true
+
 module DeviseCasAuthenticatable
   module SingleSignOut
-
     class StoreSessionId
       CAS_TICKET_STORE = 'cas_last_valid_ticket_store'
       CAS_LAST_TICKET  = 'cas_last_valid_ticket'
@@ -15,17 +16,18 @@ module DeviseCasAuthenticatable
       end
 
       private
+
       def store_session_id_for_cas_ticket(env)
         request = Rack::Request.new(env)
         session = request.session
 
-        if session.respond_to?(:id)
-          # Rack > 1.5
-          session_id = session.id
-        else
-          # Compatible with old Rack requests
-          session_id = env['rack.session.options'][:id]
-        end
+        session_id = if session.respond_to?(:id)
+                       # Rack > 1.5
+                       session.id
+                     else
+                       # Compatible with old Rack requests
+                       env['rack.session.options'][:id]
+                     end
         cas_ticket_store = session[CAS_TICKET_STORE]
 
         if cas_ticket_store

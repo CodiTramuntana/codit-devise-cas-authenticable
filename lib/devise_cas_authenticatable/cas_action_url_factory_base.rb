@@ -24,9 +24,10 @@ module Devise
       uri.to_s
     end
 
-    alias_method :build, :call
+    alias build call
 
     private
+
     def load_base_path
       load_routes_path || load_mapping_path
     end
@@ -36,18 +37,15 @@ module Devise
       context     = send(router_name)
 
       route = "#{mapping.singular}_#{action}_path"
-      if context.respond_to? route
-        context.send route
-      else
-        nil
-      end
+      context.send route if context.respond_to? route
     rescue NameError, NoMethodError
       nil
     end
 
     def load_mapping_path
       path = mapping_fullpath || mapping_raw_path
-      path << "/" unless path =~ /\/$/
+      path << '/' unless path.match?(/\/$/)
+      path << 'cas/'
       path << action
       path
     end

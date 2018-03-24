@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Scenario::Application.configure do
   # Settings specified here will take precedence over those in config/environment.rb
 
@@ -22,4 +24,3 @@ Scenario::Application.configure do
   # Only use best-standards-support built into browsers
   config.action_dispatch.best_standards_support = :builtin
 end
-

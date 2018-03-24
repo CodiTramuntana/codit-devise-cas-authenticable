@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require 'devise/version'
 
 # Devise 2.1 removes schema stuff
-if Devise::VERSION < "2.1"
+if Devise::VERSION < '2.1'
   require 'devise/schema'
 
   module Devise
