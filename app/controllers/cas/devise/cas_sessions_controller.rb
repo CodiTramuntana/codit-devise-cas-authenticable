@@ -1,11 +1,13 @@
-class Devise::CasSessionsController < Devise::SessionsController
+# frozen_string_literal: true
+
+class Cas::Devise::CasSessionsController < Devise::SessionsController
   include DeviseCasAuthenticatable::SingleSignOut::DestroySession
 
   if Rails::VERSION::MAJOR < 4
     unloadable # Rails 5 no longer requires this
-    skip_before_filter :verify_authenticity_token, :only => [:single_sign_out], :raise => false
+    skip_before_filter :verify_authenticity_token, only: [:single_sign_out], raise: false
   else
-    skip_before_action :verify_authenticity_token, :only => [:single_sign_out], :raise => false
+    skip_before_action :verify_authenticity_token, only: [:single_sign_out], raise: false
   end
 
   def new
@@ -17,11 +19,10 @@ class Devise::CasSessionsController < Devise::SessionsController
   end
 
   def service
-    redirect_to after_sign_in_path_for(warden.authenticate!(:scope => resource_name))
+    redirect_to after_sign_in_path_for(warden.authenticate!(scope: resource_name))
   end
 
-  def unregistered
-  end
+  def unregistered; end
 
   def destroy
     # if :cas_create_user is false a CAS session might be open but not signed_in
@@ -46,10 +47,10 @@ class Devise::CasSessionsController < Devise::SessionsController
           destroy_cas_session(session_index, session_id)
         end
       else
-        logger.warn "Ignoring CAS single-sign-out request as no session index could be parsed from the parameters."
+        logger.warn 'Ignoring CAS single-sign-out request as no session index could be parsed from the parameters.'
       end
     else
-      logger.warn "Ignoring CAS single-sign-out request as feature is not currently enabled."
+      logger.warn 'Ignoring CAS single-sign-out request as feature is not currently enabled.'
     end
 
     head :ok
@@ -58,11 +59,11 @@ class Devise::CasSessionsController < Devise::SessionsController
   private
 
   def read_session_index
-    if request.headers['CONTENT_TYPE'] =~ %r{^multipart/}
+    if request.headers['CONTENT_TYPE'].match?(%r{^multipart/})
       false
     elsif request.post? && params['logoutRequest'] =~
-        %r{^<samlp:LogoutRequest.*?<samlp:SessionIndex>(.*)</samlp:SessionIndex>}m
-      $~[1]
+                           %r{^<samlp:LogoutRequest.*?<samlp:SessionIndex>(.*)</samlp:SessionIndex>}m
+      $LAST_MATCH_INFO[1]
     else
       false
     end
@@ -84,7 +85,7 @@ class Devise::CasSessionsController < Devise::SessionsController
     return @request_url if @request_url
     @request_url = request.protocol.dup
     @request_url << request.host
-    @request_url << ":#{request.port.to_s}" unless request.port == 80
+    @request_url << ":#{request.port}" unless request.port == 80
     @request_url
   end
 
@@ -113,12 +114,10 @@ class Devise::CasSessionsController < Devise::SessionsController
   end
 
   def cas_logout_url
-    begin
-      ::Devise.cas_client.logout_url(cas_destination_url, cas_follow_url, cas_service_url)
-    rescue ArgumentError
-      # Older rubycas-clients don't accept a service_url
-      ::Devise.cas_client.logout_url(cas_destination_url, cas_follow_url)
-    end
+    ::Devise.cas_client.logout_url(cas_destination_url, cas_follow_url, cas_service_url)
+  rescue ArgumentError
+    # Older rubycas-clients don't accept a service_url
+    ::Devise.cas_client.logout_url(cas_destination_url, cas_follow_url)
   end
 
   def memcache_checker

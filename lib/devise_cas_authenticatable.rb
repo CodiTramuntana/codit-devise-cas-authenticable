@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'devise'
 
 require 'devise_cas_authenticatable/schema'
@@ -18,11 +20,11 @@ require 'devise_cas_authenticatable/memcache_checker'
 # Register as a Rails engine if Rails::Engine exists
 begin
   Rails::Engine
-rescue
+rescue StandardError
 else
   module DeviseCasAuthenticatable
     class Engine < Rails::Engine
-      initializer "devise_cas_authenticatable.single_sign_on.warden_failure_app" do |app|
+      initializer 'devise_cas_authenticatable.single_sign_on.warden_failure_app' do |_app|
         # requiring this here because the parent class calls Rails.application, which
         # isn't set up until after bundler has required the modules in this engine
         require 'devise_cas_authenticatable/single_sign_out/warden_failure_app'
@@ -91,12 +93,12 @@ module Devise
   def self.cas_client
     @@cas_client ||= begin
       cas_options = {
-        :cas_destination_logout_param_name => @@cas_destination_logout_param_name,
-        :cas_base_url => @@cas_base_url,
-        :login_url => @@cas_login_url,
-        :logout_url => @@cas_logout_url,
-        :validate_url => @@cas_validate_url,
-        :enable_single_sign_out => @@cas_enable_single_sign_out
+        cas_destination_logout_param_name: @@cas_destination_logout_param_name,
+        cas_base_url: @@cas_base_url,
+        login_url: @@cas_login_url,
+        logout_url: @@cas_logout_url,
+        validate_url: @@cas_validate_url,
+        enable_single_sign_out: @@cas_enable_single_sign_out
       }
 
       cas_options.merge!(@@cas_client_config_options) if @@cas_client_config_options
@@ -106,14 +108,15 @@ module Devise
   end
 
   def self.cas_service_url(base_url, mapping)
-    cas_action_url(base_url, mapping, "service")
+    cas_action_url(base_url, mapping, 'service')
   end
 
   def self.cas_unregistered_url(base_url, mapping)
-    cas_action_url(base_url, mapping, "unregistered")
+    cas_action_url(base_url, mapping, 'unregistered')
   end
 
   private
+
   def self.cas_action_url(base_url, mapping, action)
     cas_action_url_factory_class.new(base_url, mapping, action).call
   end
@@ -124,7 +127,7 @@ module Devise
 end
 
 Devise.add_module(:cas_authenticatable,
-  :strategy => true,
-  :controller => :cas_sessions,
-  :route => :cas_authenticatable,
-  :model => 'devise_cas_authenticatable/model')
+                  strategy: true,
+                  controller: :cas_sessions,
+                  route: :cas_authenticatable,
+                  model: 'devise_cas_authenticatable/model')

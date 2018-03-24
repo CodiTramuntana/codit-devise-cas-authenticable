@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'socket'
 require 'timeout'
 
@@ -14,9 +16,9 @@ module DeviseCasAuthenticatable
     end
 
     def alive?
-      memcache_servers = rails_configuration.session_options[:memcache_server] || ["127.0.0.1:11211"]
+      memcache_servers = rails_configuration.session_options[:memcache_server] || ['127.0.0.1:11211']
       memcache_servers.each do |server|
-        host, port = server.split(":")
+        host, port = server.split(':')
         begin
           try_connect host, port
 
@@ -28,7 +30,7 @@ module DeviseCasAuthenticatable
     end
 
     def try_connect(host, port)
-      Timeout::timeout(1) do
+      Timeout.timeout(1) do
         TCPSocket.open(host, port)
       end
     end

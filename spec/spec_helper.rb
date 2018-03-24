@@ -1,8 +1,10 @@
-ENV["RAILS_ENV"] = "test"
-$:.unshift File.dirname(__FILE__)
-$:.unshift File.expand_path('../../lib', __FILE__)
+# frozen_string_literal: true
 
-require "scenario/config/environment"
+ENV['RAILS_ENV'] = 'test'
+$LOAD_PATH.unshift File.dirname(__FILE__)
+$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
+
+require 'scenario/config/environment'
 require 'rspec/rails'
 require 'sham_rack'
 require 'capybara/rspec'

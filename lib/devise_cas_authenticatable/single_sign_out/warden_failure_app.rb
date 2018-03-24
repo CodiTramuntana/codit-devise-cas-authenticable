@@ -1,7 +1,8 @@
+# frozen_string_literal: true
+
 # Redirect to the logout url when :warden is thrown,
 # so that a single_sign_out request can be initiated
 class DeviseCasAuthenticatable::SingleSignOut::WardenFailureApp < Devise::FailureApp
-
   # You need to override respond to eliminate recall
   def respond
     if http_auth?
@@ -25,7 +26,7 @@ class DeviseCasAuthenticatable::SingleSignOut::WardenFailureApp < Devise::Failur
   protected
 
   def redirect_url
-    if [:timeout, :inactive].include? warden_message
+    if %i[timeout inactive].include? warden_message
       flash[:timedout] = true if warden_message == :timeout
       Devise.cas_client.logout_url
     else
@@ -36,7 +37,7 @@ class DeviseCasAuthenticatable::SingleSignOut::WardenFailureApp < Devise::Failur
       end
     end
   end
-  
+
   # Devise < 2.0 doesn't have this method, which we want to use
   unless instance_methods.include?(:warden_message)
     define_method :warden_message do
