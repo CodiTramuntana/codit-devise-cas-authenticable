@@ -1,8 +1,9 @@
+# frozen_string_literal: true
+
 module DeviseCasAuthenticatable
   module SingleSignOut
     module Strategies
       class << self
-
         # Add a strategy and store it in a hash.
         def add(label, strategy, &block)
           strategy ||= Class.new(DeviseCasAuthenticatable::SingleSignOut::Strategies::Base)
@@ -16,7 +17,7 @@ module DeviseCasAuthenticatable
             raise "#{label.inspect} is not a #{base}"
           end
 
-          _strategies[label] = strategy.new()
+          _strategies[label] = strategy.new
         end
 
         # Update a previously given strategy.
@@ -48,10 +49,9 @@ module DeviseCasAuthenticatable
 
         def check_method(label, strategy, method)
           unless strategy.method_defined?(method)
-            raise NoMethodError, "#{method.to_s} is not declared in the #{label.inspect} strategy"
+            raise NoMethodError, "#{method} is not declared in the #{label.inspect} strategy"
           end
         end
-
       end
     end
   end
