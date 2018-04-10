@@ -13,6 +13,7 @@ require 'devise_cas_authenticatable/single_sign_out'
 require 'devise_cas_authenticatable/cas_action_url_factory_base'
 
 require 'rubycas-client'
+require_relative 'casclient/client'
 
 require 'devise_cas_authenticatable/railtie' if defined?(Rails::Railtie)
 require 'devise_cas_authenticatable/memcache_checker'
