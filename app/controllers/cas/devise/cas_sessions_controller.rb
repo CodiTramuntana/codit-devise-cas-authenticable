@@ -82,7 +82,8 @@ class Cas::Devise::CasSessionsController < Devise::SessionsController
   end
 
   def cas_login_url
-    ::Devise.cas_client.add_service_to_login_url(::Devise.cas_service_url(request.url, devise_mapping))
+    login_url = ::Devise.cas_client.add_service_to_login_url(::Devise.cas_service_url(request.url, devise_mapping))
+    login_url+= "&locale=#{I18n.locale}"
   end
   helper_method :cas_login_url
 
