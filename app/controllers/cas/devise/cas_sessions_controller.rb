@@ -22,7 +22,7 @@ class Cas::Devise::CasSessionsController < Devise::SessionsController
     if signed_in?(resource_name)
       redirect_to after_sign_in_path_for(warden.authenticate!(scope: resource_name))
     else
-      redirect_to after_sign_in_path_for(resource_name)
+      redirect_to request.base_url + "?locale=#{params["locale"].presence || I18n.locale}"
     end
 
   end
@@ -83,7 +83,7 @@ class Cas::Devise::CasSessionsController < Devise::SessionsController
 
   def cas_login_url
     login_url = ::Devise.cas_client.add_service_to_login_url(::Devise.cas_service_url(request.url, devise_mapping))
-    login_url+= "&locale=#{I18n.locale}"
+    login_url+= "&locale=#{params["locale"].presence || I18n.locale}"
   end
   helper_method :cas_login_url
 
@@ -120,10 +120,12 @@ class Cas::Devise::CasSessionsController < Devise::SessionsController
   end
 
   def cas_logout_url
-    ::Devise.cas_client.logout_url(cas_destination_url, cas_follow_url, cas_service_url)
+    logout_url= ::Devise.cas_client.logout_url(cas_destination_url, cas_follow_url, cas_service_url)
+    logout_url+= "&locale=#{params["locale"].presence || I18n.locale}"
   rescue ArgumentError
     # Older rubycas-clients don't accept a service_url
-    ::Devise.cas_client.logout_url(cas_destination_url, cas_follow_url)
+    logout_url= ::Devise.cas_client.logout_url(cas_destination_url, cas_follow_url)
+    logout_url+= "&locale=#{params["locale"].presence || I18n.locale}"
   end
 
   def memcache_checker
