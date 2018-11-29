@@ -59,7 +59,7 @@ module Devise
 
         def extract_organization_id(response)
           host = URI.parse(response.service).host
-          organization = Decidim::Organization.find_by(host: 'participa.somenergia.coop')
+          organization = Decidim::Organization.find_by(host: host)
           organization.try(:id)
         end
 
