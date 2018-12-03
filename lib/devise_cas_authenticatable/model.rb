@@ -63,18 +63,22 @@ module Devise
           organization.try(:id)
         end
 
-        def extract_attributes(response, new_record = true)
+        def extract_attributes(response, record)
           extra_attributes = response.extra_attributes
-          name = %(#{extra_attributes['first_name']} #{extra_attributes['last_name']})
 
           attributes = {
             email: extra_attributes['email']
           }
 
-          if new_record
+          if record.username.blank?
             attributes = attributes.merge(
-              name: name,
-              username: extra_attributes['username'],
+              username: extra_attributes['username']
+            )
+          end
+
+          if record.new_record?
+            attributes = attributes.merge(
+              name: %(#{extra_attributes['first_name']} #{extra_attributes['last_name']}),
               decidim_organization_id: extract_organization_id(response),
               tos_agreement: true,
               nickname: nicknamize(name),
@@ -92,18 +96,21 @@ module Devise
         end
 
         def find_or_build_resource_from_conditions(conditions, response)
-          resource = find_resource_with_conditions(conditions)
+          resource = find_resource_with_conditions(conditions, response.extra_attributes)
           resource = new if resource.nil? && should_create_cas_users?
 
-          attributes = extract_attributes(response, resource.new_record?)
+          attributes = extract_attributes(response, resource)
           resource.assign_attributes(attributes)
           resource.confirm
           resource
         end
 
-        def find_resource_with_conditions(conditions)
+        def find_resource_with_conditions(conditions, extra_conditions = {})
           # We don't want to override Devise 1.1's find_for_authentication
-          return find_for_authentication(conditions) if respond_to?(:find_for_authentication)
+          if respond_to?(:find_for_authentication)
+            resource = find_for_authentication(conditions)
+            return resource ||= find_by(email: extra_conditions['email']) if extra_conditions.present? # search with email
+          end
           find(:first, conditions: conditions)
         end
       end

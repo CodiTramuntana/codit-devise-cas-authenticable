@@ -24,7 +24,7 @@ module Devise
               session['cas_last_valid_ticket'] = ticket.ticket
               session['cas_last_valid_ticket_store'] = true
             end
-
+            resource.grant_authorization
             success!(resource)
           elsif ticket.is_valid?
             username = ticket.respond_to?(:user) ? ticket.user : ticket.response.user
