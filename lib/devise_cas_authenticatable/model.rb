@@ -30,7 +30,11 @@ module Devise
             # or the value is blank, then we're done here
             return log_and_exit if identifier.nil?
 
-            conditions = { ::Devise.cas_username_column => identifier, soci: extract_user_soci(ticket_response) }
+            conditions = {
+              ::Devise.cas_username_column => identifier,
+              soci: extract_user_soci(ticket_response),
+              decidim_organization_id: extract_organization_id(ticket_response)
+            }
             resource = find_or_build_resource_from_conditions(conditions, ticket_response)
             return nil unless resource
 
