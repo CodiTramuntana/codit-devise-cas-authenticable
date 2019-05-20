@@ -25,16 +25,15 @@ module Devise
             ticket_response = ticket.respond_to?(:user) ? ticket : ticket.response
 
             identifier = extract_user_identifier(ticket_response)
-
             # If cas_user_identifier isn't in extra_attributes,
             # or the value is blank, then we're done here
             return log_and_exit if identifier.nil?
-
             conditions = {
               ::Devise.cas_username_column => identifier,
               soci: extract_user_soci(ticket_response),
               decidim_organization_id: extract_organization_id(ticket_response)
-            }
+            }.with_indifferent_access
+
             resource = find_or_build_resource_from_conditions(conditions, ticket_response)
             return nil unless resource
 
@@ -84,7 +83,7 @@ module Devise
             attributes = attributes.merge(
               name: %(#{extra_attributes['first_name']} #{extra_attributes['last_name']}),
               decidim_organization_id: extract_organization_id(response),
-              tos_agreement: true,
+              accepted_tos_version: Time.current,
               nickname: nicknamize(name),
               password: Devise.friendly_token.first(name.length)
             )
@@ -113,7 +112,7 @@ module Devise
           # We don't want to override Devise 1.1's find_for_authentication
           if respond_to?(:find_for_authentication)
             resource = find_for_authentication(conditions)
-            return resource ||= find_by(email: extra_conditions['email']) if extra_conditions.present? # search with email
+            return resource ||= find_by(email: extra_conditions['email'], decidim_organization_id: conditions['decidim_organization_id']) if extra_conditions.present? # search with email
           end
           find(:first, conditions: conditions)
         end
