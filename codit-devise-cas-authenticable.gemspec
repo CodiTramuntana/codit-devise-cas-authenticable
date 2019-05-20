@@ -5,7 +5,7 @@ $LOAD_PATH.push File.expand_path('lib', __dir__)
 # require "decidim/cas_client/version"
 
 Gem::Specification.new do |s|
-  s.version = '0.0.5'
+  s.version = '0.0.6'
   s.authors = ['Marc Reniu']
   s.email = ['marc.rs@coditramuntana.com']
   s.license = 'AGPL-3.0'
